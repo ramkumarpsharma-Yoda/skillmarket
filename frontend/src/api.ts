@@ -10,8 +10,22 @@ async function request(path: string, options: RequestInit = {}) {
   if (token) headers['Authorization'] = `Bearer ${token}`;
   if (!(options.body instanceof FormData)) headers['Content-Type'] = 'application/json';
 
-  const res = await fetch(`${BASE}${path}`, { ...options, headers });
-  const data = await res.json();
+  const url = `${BASE}${path}`;
+  let res: Response;
+  try {
+    res = await fetch(url, { ...options, headers });
+  } catch (e) {
+    throw new Error('Cannot reach server. Check if backend is running.');
+  }
+
+  const text = await res.text();
+  let data: any;
+  try {
+    data = text ? JSON.parse(text) : {};
+  } catch {
+    throw new Error(`Server returned invalid response. URL: ${url}`);
+  }
+
   if (!res.ok) throw new Error(data.error || 'Request failed');
   return data;
 }
