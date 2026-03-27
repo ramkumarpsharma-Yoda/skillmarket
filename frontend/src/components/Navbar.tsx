@@ -17,7 +17,7 @@ export default function Navbar() {
             )}
             <Link to="/my-bookings">My Bookings</Link>
             <Link to="/support">Support</Link>
-            <span className="nav-user">{user.name}</span>
+            <Link to="/my-account" className="nav-user">{user.name}</Link>
             <button onClick={logout} className="btn btn-sm">Logout</button>
           </>
         ) : (

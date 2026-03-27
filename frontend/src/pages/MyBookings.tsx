@@ -50,9 +50,30 @@ export default function MyBookings() {
                   {b.booking_date} · {b.start_hour}:00 ({b.duration_hours}hr) · {b.consultation_mode.replace('_', ' ')} · ₹{b.total_amount}
                   {b.payment_mode === 'partial_onspot' && ` (₹${b.remaining_amount} on-spot)`}
                 </p>
-                <span className={`status-badge status-${b.status}`}>{b.status}</span>
+                <span className={`status-badge status-${b.status}`}>{b.status === 'cancelled_by_pro' ? 'cancelled by professional' : b.status}</span>
               </div>
               <div className="booking-actions">
+                {b.status === 'proposed' && (
+                  <>
+                    <div style={{ fontSize: 13, color: '#92400e', background: '#fef3c7', padding: '6px 10px', borderRadius: 8, marginBottom: 8 }}>
+                      Professional proposed: {b.proposed_date} at {b.proposed_hour}:00
+                    </div>
+                    <button className="btn btn-primary btn-sm" onClick={async () => {
+                      try {
+                        await api.acceptProposal(b.id)
+                        setMsg('Proposal accepted. Booking confirmed at new slot.')
+                        setBookings(prev => prev.map(x => x.id === b.id ? { ...x, status: 'confirmed', booking_date: b.proposed_date, start_hour: b.proposed_hour } : x))
+                      } catch (err: any) { setMsg(err.message) }
+                    }}>✓ Accept New Slot</button>
+                    <button className="btn btn-danger btn-sm" onClick={async () => {
+                      try {
+                        await api.rejectProposal(b.id)
+                        setMsg('Proposal rejected. Booking cancelled with full refund.')
+                        setBookings(prev => prev.map(x => x.id === b.id ? { ...x, status: 'cancelled' } : x))
+                      } catch (err: any) { setMsg(err.message) }
+                    }}>✕ Reject & Cancel</button>
+                  </>
+                )}
                 {b.status === 'confirmed' && (
                   <>
                     <button className="btn btn-outline btn-sm" onClick={() => {

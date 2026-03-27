@@ -195,4 +195,73 @@ router.post('/:id/complete', authRequired, async (req: AuthRequest, res: Respons
   } catch (err: any) { res.status(500).json({ error: err.message }); }
 });
 
+// Professional cancels a booking
+router.post('/:id/pro-cancel', authRequired, async (req: AuthRequest, res: Response) => {
+  try {
+    const profile = await getOne('SELECT id FROM profiles WHERE user_id = ?', req.userId!);
+    if (!profile) return res.status(403).json({ error: 'Not a professional' });
+    const booking = await getOne('SELECT * FROM bookings WHERE id = ? AND profile_id = ?', req.params.id, profile.id);
+    if (!booking) return res.status(404).json({ error: 'Booking not found' });
+    if (booking.status === 'cancelled') return res.status(400).json({ error: 'Already cancelled' });
+
+    const { reason } = req.body;
+    // Professional cancellation = full refund to client always
+    await run('UPDATE bookings SET status = ?, cancel_reason = ? WHERE id = ?',
+      'cancelled_by_pro', reason || 'Cancelled by professional', req.params.id);
+    res.json({ message: 'Booking cancelled. Full refund will be issued to client.', refund_amount: booking.booking_amount });
+  } catch (err: any) { res.status(500).json({ error: err.message }); }
+});
+
+// Professional proposes a new slot
+router.post('/:id/propose', authRequired, async (req: AuthRequest, res: Response) => {
+  try {
+    const profile = await getOne('SELECT id FROM profiles WHERE user_id = ?', req.userId!);
+    if (!profile) return res.status(403).json({ error: 'Not a professional' });
+    const booking = await getOne('SELECT * FROM bookings WHERE id = ? AND profile_id = ?', req.params.id, profile.id);
+    if (!booking) return res.status(404).json({ error: 'Booking not found' });
+    if (booking.status !== 'confirmed') return res.status(400).json({ error: 'Can only propose changes for confirmed bookings' });
+
+    const { proposed_date, proposed_hour } = req.body;
+    if (!proposed_date || proposed_hour === undefined)
+      return res.status(400).json({ error: 'proposed_date and proposed_hour required' });
+
+    // Check the proposed slot is available
+    const existing = await getOne(
+      `SELECT id FROM bookings WHERE profile_id = ? AND booking_date = ? AND start_hour = ? AND status NOT IN ('cancelled', 'cancelled_by_pro') AND id != ?`,
+      profile.id, proposed_date, proposed_hour, req.params.id);
+    if (existing) return res.status(409).json({ error: 'Proposed slot is not available' });
+
+    await run('UPDATE bookings SET status = ?, proposed_date = ?, proposed_hour = ? WHERE id = ?',
+      'proposed', proposed_date, proposed_hour, req.params.id);
+    res.json({ message: 'New slot proposed to client' });
+  } catch (err: any) { res.status(500).json({ error: err.message }); }
+});
+
+// Client accepts proposed slot
+router.post('/:id/accept-proposal', authRequired, async (req: AuthRequest, res: Response) => {
+  try {
+    const booking = await getOne('SELECT * FROM bookings WHERE id = ? AND client_id = ?', req.params.id, req.userId!);
+    if (!booking) return res.status(404).json({ error: 'Booking not found' });
+    if (booking.status !== 'proposed') return res.status(400).json({ error: 'No proposal to accept' });
+
+    // Move to the proposed slot
+    await run('UPDATE bookings SET booking_date = ?, start_hour = ?, status = ?, proposed_date = NULL, proposed_hour = NULL WHERE id = ?',
+      booking.proposed_date, booking.proposed_hour, 'confirmed', req.params.id);
+    res.json({ message: 'Proposal accepted. Booking confirmed at new slot.' });
+  } catch (err: any) { res.status(500).json({ error: err.message }); }
+});
+
+// Client rejects proposed slot (cancels booking with full refund)
+router.post('/:id/reject-proposal', authRequired, async (req: AuthRequest, res: Response) => {
+  try {
+    const booking = await getOne('SELECT * FROM bookings WHERE id = ? AND client_id = ?', req.params.id, req.userId!);
+    if (!booking) return res.status(404).json({ error: 'Booking not found' });
+    if (booking.status !== 'proposed') return res.status(400).json({ error: 'No proposal to reject' });
+
+    await run('UPDATE bookings SET status = ?, proposed_date = NULL, proposed_hour = NULL WHERE id = ?',
+      'cancelled', req.params.id);
+    res.json({ message: 'Proposal rejected. Booking cancelled with full refund.', refund_amount: booking.booking_amount });
+  } catch (err: any) { res.status(500).json({ error: err.message }); }
+});
+
 export default router;

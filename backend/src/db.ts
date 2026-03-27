@@ -15,9 +15,18 @@ export async function initDB() {
         password TEXT NOT NULL,
         name TEXT NOT NULL,
         phone TEXT,
+        address TEXT,
+        city TEXT,
+        state TEXT,
+        pincode TEXT,
         role TEXT NOT NULL DEFAULT 'client',
         created_at TIMESTAMPTZ DEFAULT NOW()
       )`);
+    // Add columns if they don't exist (migration for existing DBs)
+    await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS address TEXT`);
+    await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS city TEXT`);
+    await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS state TEXT`);
+    await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS pincode TEXT`);
     await client.query(`
       CREATE TABLE IF NOT EXISTS profiles (
         id TEXT PRIMARY KEY,
@@ -69,8 +78,15 @@ export async function initDB() {
         is_recurring INTEGER NOT NULL DEFAULT 0,
         recurring_days INTEGER DEFAULT NULL,
         parent_booking_id TEXT,
+        proposed_date TEXT,
+        proposed_hour INTEGER,
+        cancel_reason TEXT,
         created_at TIMESTAMPTZ DEFAULT NOW()
       )`);
+    // Migration for existing DBs
+    await client.query(`ALTER TABLE bookings ADD COLUMN IF NOT EXISTS proposed_date TEXT`);
+    await client.query(`ALTER TABLE bookings ADD COLUMN IF NOT EXISTS proposed_hour INTEGER`);
+    await client.query(`ALTER TABLE bookings ADD COLUMN IF NOT EXISTS cancel_reason TEXT`);
     await client.query(`
       CREATE TABLE IF NOT EXISTS feedbacks (
         id TEXT PRIMARY KEY,

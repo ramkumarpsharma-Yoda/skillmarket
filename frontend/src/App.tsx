@@ -8,6 +8,7 @@ import ProfileDetail from './pages/ProfileDetail'
 import CreateProfile from './pages/CreateProfile'
 import MyBookings from './pages/MyBookings'
 import Dashboard from './pages/Dashboard'
+import MyAccount from './pages/MyAccount'
 import Support from './pages/Support'
 
 export default function App() {
@@ -23,6 +24,7 @@ export default function App() {
           <Route path="/profile/:id" element={<ProfileDetail />} />
           <Route path="/create-profile" element={<CreateProfile />} />
           <Route path="/my-bookings" element={<MyBookings />} />
+          <Route path="/my-account" element={<MyAccount />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/support" element={<Support />} />
         </Routes>

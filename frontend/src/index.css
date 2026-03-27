@@ -163,3 +163,6 @@ a:hover { text-decoration: underline; }
   .home .hero h1 { font-size: 28px; }
   .hero-actions { flex-direction: column; align-items: center; }
 }
+
+.status-proposed { background: #fef3c7; color: #92400e; }
+.status-cancelled_by_pro { background: #fee2e2; color: #991b1b; }

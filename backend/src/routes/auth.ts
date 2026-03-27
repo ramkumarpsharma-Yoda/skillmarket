@@ -40,8 +40,22 @@ router.post('/login', async (req: Request, res: Response) => {
 
 router.get('/me', authRequired, async (req: AuthRequest, res: Response) => {
   try {
-    const user = await getOne('SELECT id, email, name, phone, role, created_at FROM users WHERE id = ?', req.userId!);
+    const user = await getOne('SELECT id, email, name, phone, address, city, state, pincode, role, created_at FROM users WHERE id = ?', req.userId!);
     if (!user) return res.status(404).json({ error: 'User not found' });
+    res.json(user);
+  } catch (err: any) { res.status(500).json({ error: err.message }); }
+});
+
+router.put('/me', authRequired, async (req: AuthRequest, res: Response) => {
+  try {
+    const { name, phone, address, city, state, pincode } = req.body;
+    await run(`UPDATE users SET 
+      name = COALESCE(?, name), phone = COALESCE(?, phone),
+      address = COALESCE(?, address), city = COALESCE(?, city),
+      state = COALESCE(?, state), pincode = COALESCE(?, pincode)
+      WHERE id = ?`,
+      name || null, phone || null, address || null, city || null, state || null, pincode || null, req.userId!);
+    const user = await getOne('SELECT id, email, name, phone, address, city, state, pincode, role, created_at FROM users WHERE id = ?', req.userId!);
     res.json(user);
   } catch (err: any) { res.status(500).json({ error: err.message }); }
 });

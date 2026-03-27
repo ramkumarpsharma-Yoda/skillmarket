@@ -35,6 +35,7 @@ export const api = {
   signup: (body: any) => request('/auth/signup', { method: 'POST', body: JSON.stringify(body) }),
   login: (body: any) => request('/auth/login', { method: 'POST', body: JSON.stringify(body) }),
   me: () => request('/auth/me'),
+  updateMe: (body: any) => request('/auth/me', { method: 'PUT', body: JSON.stringify(body) }),
 
   // Profiles
   getProfiles: (params?: string) => request(`/profiles${params ? `?${params}` : ''}`),
@@ -51,6 +52,10 @@ export const api = {
   cancelBooking: (id: string) => request(`/bookings/${id}/cancel`, { method: 'POST' }),
   modifyBooking: (id: string, body: any) => request(`/bookings/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
   completeBooking: (id: string) => request(`/bookings/${id}/complete`, { method: 'POST' }),
+  proCancelBooking: (id: string, reason: string) => request(`/bookings/${id}/pro-cancel`, { method: 'POST', body: JSON.stringify({ reason }) }),
+  proposeSlot: (id: string, proposed_date: string, proposed_hour: number) => request(`/bookings/${id}/propose`, { method: 'POST', body: JSON.stringify({ proposed_date, proposed_hour }) }),
+  acceptProposal: (id: string) => request(`/bookings/${id}/accept-proposal`, { method: 'POST' }),
+  rejectProposal: (id: string) => request(`/bookings/${id}/reject-proposal`, { method: 'POST' }),
 
   // Feedback
   submitFeedback: (body: any) => request('/feedback', { method: 'POST', body: JSON.stringify(body) }),
