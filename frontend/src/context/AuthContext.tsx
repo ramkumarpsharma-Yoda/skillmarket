@@ -1,6 +1,8 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import { api } from '../api';
 
+const TOKEN_KEY = 'proficio_token';
+
 interface User { id: string; email: string; name: string; role: string; }
 interface AuthCtx {
   user: User | null;
@@ -18,9 +20,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem('sm_token');
+    const token = localStorage.getItem(TOKEN_KEY);
     if (token) {
-      api.me().then(u => setUser(u)).catch(() => localStorage.removeItem('sm_token')).finally(() => setLoading(false));
+      api.me().then(u => setUser(u)).catch(() => localStorage.removeItem(TOKEN_KEY)).finally(() => setLoading(false));
     } else {
       setLoading(false);
     }
@@ -28,18 +30,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (email: string, password: string) => {
     const res = await api.login({ email, password });
-    localStorage.setItem('sm_token', res.token);
+    localStorage.setItem(TOKEN_KEY, res.token);
     setUser(res.user);
   };
 
   const signup = async (data: any) => {
     const res = await api.signup(data);
-    localStorage.setItem('sm_token', res.token);
+    localStorage.setItem(TOKEN_KEY, res.token);
     setUser(res.user);
   };
 
   const logout = () => {
-    localStorage.removeItem('sm_token');
+    localStorage.removeItem(TOKEN_KEY);
     setUser(null);
   };
 

@@ -44,5 +44,5 @@ app.get('/api/categories', (_req, res) => {
 });
 
 initDB().then(() => {
-  app.listen(PORT, () => console.log(`SkillMarket API running on http://localhost:${PORT}`));
+  app.listen(PORT, () => console.log(`Proficio API running on http://localhost:${PORT}`));
 });

@@ -1,7 +1,7 @@
 const BASE = import.meta.env.VITE_API_URL || '/api';
 
 function getToken() {
-  return localStorage.getItem('sm_token');
+  return localStorage.getItem('proficio_token');
 }
 
 async function request(path: string, options: RequestInit = {}) {

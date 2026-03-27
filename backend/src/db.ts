@@ -2,7 +2,7 @@ import initSqlJs, { Database as SqlJsDatabase } from 'sql.js';
 import fs from 'fs';
 import path from 'path';
 
-const DB_PATH = path.join(__dirname, '..', 'skillmarket.db');
+const DB_PATH = path.join(__dirname, '..', 'proficio.db');
 
 let db: SqlJsDatabase;
 
