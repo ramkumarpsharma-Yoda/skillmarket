@@ -6,7 +6,6 @@ async function seed() {
   await initDB();
   const hash = bcrypt.hashSync('password123', 10);
 
-  // Create professionals
   const pros = [
     { name: 'Priya Sharma', email: 'priya@example.com', category: 'teacher', expertise: 'Mathematics & Physics', years: 8, charge: 500, bio: 'Experienced math teacher with 8 years in CBSE curriculum.', modes: ['video', 'client_location'] },
     { name: 'Rajesh Kumar', email: 'rajesh@example.com', category: 'lawyer', expertise: 'Criminal & Civil Law', years: 15, charge: 2000, bio: 'Senior advocate with expertise in criminal and civil litigation.', modes: ['video', 'skilled_location'], addr: '45 Court Road', city: 'Delhi', state: 'Delhi', pin: '110001' },
@@ -18,29 +17,28 @@ async function seed() {
   for (const p of pros) {
     const uid = uuid();
     const pid = uuid();
-    const existing = getOne('SELECT id FROM users WHERE email = ?', p.email);
+    const existing = await getOne('SELECT id FROM users WHERE email = ?', p.email);
     if (existing) continue;
-    run('INSERT INTO users (id, email, password, name, role) VALUES (?, ?, ?, ?, ?)', uid, p.email, hash, p.name, 'professional');
+    await run('INSERT INTO users (id, email, password, name, role) VALUES (?, ?, ?, ?, ?)', uid, p.email, hash, p.name, 'professional');
     const needsLoc = p.modes.includes('skilled_location');
-    run(`INSERT INTO profiles (id, user_id, category, expertise, years_experience, bio, base_charge, min_hours, max_hours,
+    await run(`INSERT INTO profiles (id, user_id, category, expertise, years_experience, bio, base_charge, min_hours, max_hours,
       consultation_modes, skilled_location_address, skilled_location_city, skilled_location_state, skilled_location_pincode,
       aadhaar_doc, qualification_docs, status) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
       pid, uid, p.category, p.expertise, p.years, p.bio, p.charge, 1, 8,
       JSON.stringify(p.modes), needsLoc ? (p.addr || null) : null, needsLoc ? (p.city || null) : null,
       needsLoc ? (p.state || null) : null, needsLoc ? (p.pin || null) : null, 'seed_aadhaar.pdf', '', 'approved');
-    // Add availability Mon-Fri 9-17
     for (let d = 1; d <= 5; d++) {
-      run('INSERT INTO availability (id, profile_id, day_of_week, start_hour, end_hour) VALUES (?,?,?,?,?)', uuid(), pid, d, 9, 17);
+      await run('INSERT INTO availability (id, profile_id, day_of_week, start_hour, end_hour) VALUES (?,?,?,?,?)', uuid(), pid, d, 9, 17);
     }
   }
 
-  // Create a test client
-  const clientExists = getOne('SELECT id FROM users WHERE email = ?', 'client@example.com');
+  const clientExists = await getOne('SELECT id FROM users WHERE email = ?', 'client@example.com');
   if (!clientExists) {
-    run('INSERT INTO users (id, email, password, name, role) VALUES (?, ?, ?, ?, ?)', uuid(), 'client@example.com', hash, 'Test Client', 'client');
+    await run('INSERT INTO users (id, email, password, name, role) VALUES (?, ?, ?, ?, ?)', uuid(), 'client@example.com', hash, 'Test Client', 'client');
   }
 
   console.log('Seed complete! Login with any email above + password: password123');
+  process.exit(0);
 }
 
-seed().catch(console.error);
+seed().catch(e => { console.error(e); process.exit(1); });
